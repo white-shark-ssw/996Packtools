@@ -37,7 +37,7 @@ def compile_check(raw, name):
         try:
             from lupa.lua51 import LuaRuntime
         except ImportError as error:
-            raise ProtectionError('Lua保护校验需要 Lupa：请先执行 python -m pip install -r requirements.txt') from error
+            raise ProtectionError('Lua保护校验需要 Lupa：Windows 请先运行“安装保护依赖.bat”再用“启动工具.bat”启动；其他环境请执行 python -m pip install -r requirements.txt') from error
         _runtime.lua = LuaRuntime(encoding=None, unpack_returned_tuples=True)
         _runtime.compiler = _runtime.lua.eval(b'function(s,n) local f,e=loadstring(s,n); return f~=nil,e end')
     valid, error = _runtime.compiler(raw, name)
