@@ -1,0 +1,2 @@
+# Imported only when Lua protection is enabled. No new dependency for ordinary packing.
+lupa==2.8

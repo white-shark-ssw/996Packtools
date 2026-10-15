@@ -1,0 +1,331 @@
+{
+  "schema": "ws-lua-scope-cases-v1",
+  "purpose": "Test inputs and baseline results; not a production rename whitelist, not a working obfuscator.",
+  "cases": [
+    {
+      "id": "local_alias_of_global",
+      "policy": "rename_safe",
+      "encoding": "utf-8",
+      "source": "GameData = {Object = {value = 7}}\nlocal GameData = GameData\nreturn GameData.Object.value",
+      "expected": 7,
+      "protected_globals": [
+        "GameData"
+      ],
+      "protected_fields": [
+        "Object",
+        "value"
+      ],
+      "protected_string_values": [],
+      "note": "Initializer RHS is global; subsequent bound GameData is local."
+    },
+    {
+      "id": "initializer_outer_binding",
+      "policy": "rename_safe",
+      "encoding": "utf-8",
+      "source": "local x = 8\ndo\n    local x = x + 1\n    return x\nend",
+      "expected": 9,
+      "protected_globals": [],
+      "protected_fields": [],
+      "protected_string_values": [],
+      "note": ""
+    },
+    {
+      "id": "parallel_initializers",
+      "policy": "rename_safe",
+      "encoding": "utf-8",
+      "source": "local a, b = 1, 2\ndo\n    local a, b = b, a\n    return a * 10 + b\nend",
+      "expected": 21,
+      "protected_globals": [],
+      "protected_fields": [],
+      "protected_string_values": [],
+      "note": ""
+    },
+    {
+      "id": "nested_shadowing",
+      "policy": "rename_safe",
+      "encoding": "utf-8",
+      "source": "local x = 2\nlocal f = function() return x end\ndo local x = 9 end\nreturn f()",
+      "expected": 2,
+      "protected_globals": [],
+      "protected_fields": [],
+      "protected_string_values": [],
+      "note": ""
+    },
+    {
+      "id": "mutable_capture",
+      "policy": "rename_safe",
+      "encoding": "utf-8",
+      "source": "local n = 1\nlocal function make() return function(v) n = n + v; return n end end\nlocal f = make()\nf(2)\nreturn f(2)",
+      "expected": 5,
+      "protected_globals": [],
+      "protected_fields": [],
+      "protected_string_values": [],
+      "note": ""
+    },
+    {
+      "id": "local_recursive_function",
+      "policy": "rename_safe",
+      "encoding": "utf-8",
+      "source": "local function fact(n) if n <= 1 then return 1 end; return n * fact(n - 1) end\nreturn fact(5)",
+      "expected": 120,
+      "protected_globals": [],
+      "protected_fields": [],
+      "protected_string_values": [],
+      "note": ""
+    },
+    {
+      "id": "function_value_initializer",
+      "policy": "rename_safe",
+      "encoding": "utf-8",
+      "source": "local f = function() return 5 end\ndo\n    local f = function() return f() + 1 end\n    return f()\nend",
+      "expected": 6,
+      "protected_globals": [],
+      "protected_fields": [],
+      "protected_string_values": [],
+      "note": "The inner function value captures the outer f, not its own not-yet-in-scope declaration."
+    },
+    {
+      "id": "method_implicit_self",
+      "policy": "rename_safe",
+      "encoding": "utf-8",
+      "source": "local obj = {value = 4}\nfunction obj:add(n) self.value = self.value + n; return self.value end\nreturn obj:add(3)",
+      "expected": 7,
+      "protected_globals": [],
+      "protected_fields": [
+        "value",
+        "add"
+      ],
+      "protected_string_values": [],
+      "note": ""
+    },
+    {
+      "id": "field_equals_local_name",
+      "policy": "rename_safe",
+      "encoding": "utf-8",
+      "source": "local data = 9\nlocal t = {data = data}\nreturn t.data",
+      "expected": 9,
+      "protected_globals": [],
+      "protected_fields": [
+        "data"
+      ],
+      "protected_string_values": [],
+      "note": ""
+    },
+    {
+      "id": "dynamic_table_index",
+      "policy": "rename_safe",
+      "encoding": "utf-8",
+      "source": "local key = \"data\"\nlocal t = {data = 7}\nreturn t[key]",
+      "expected": 7,
+      "protected_globals": [],
+      "protected_fields": [
+        "data"
+      ],
+      "protected_string_values": [
+        "data"
+      ],
+      "note": ""
+    },
+    {
+      "id": "module_data_reference",
+      "policy": "rename_safe",
+      "encoding": "utf-8",
+      "source": "guanzhi = {data = {{value = 11}}}\nlocal level = 1\nlocal config = guanzhi.data[level]\nreturn config.value",
+      "expected": 11,
+      "protected_globals": [
+        "guanzhi"
+      ],
+      "protected_fields": [
+        "data",
+        "value"
+      ],
+      "protected_string_values": [],
+      "note": ""
+    },
+    {
+      "id": "new_api_gamedata",
+      "policy": "rename_safe",
+      "encoding": "utf-8",
+      "source": "ws = {}\nGameData = {Object = {tester = 23}}\nfunction ws.NewAPI(player)\n    local cache = GameData.Object\n    return cache[player]\nend\nreturn ws.NewAPI(\"tester\")",
+      "expected": 23,
+      "protected_globals": [
+        "ws",
+        "GameData"
+      ],
+      "protected_fields": [
+        "NewAPI",
+        "Object",
+        "tester"
+      ],
+      "protected_string_values": [
+        "tester"
+      ],
+      "note": ""
+    },
+    {
+      "id": "global_callback_lookup",
+      "policy": "rename_safe",
+      "encoding": "utf-8",
+      "source": "function published(value) return value + 1 end\nlocal name = \"published\"\nreturn _G[name](8)",
+      "expected": 9,
+      "protected_globals": [
+        "published",
+        "_G"
+      ],
+      "protected_fields": [],
+      "protected_string_values": [
+        "published"
+      ],
+      "note": ""
+    },
+    {
+      "id": "dynamic_environment_field",
+      "policy": "rename_safe",
+      "encoding": "utf-8",
+      "source": "local handle = 17\nlocal f = assert(loadstring(\"return handle\"))\nsetfenv(f, {handle = handle})\nreturn f()",
+      "expected": 17,
+      "protected_globals": [
+        "assert",
+        "loadstring",
+        "setfenv"
+      ],
+      "protected_fields": [
+        "handle"
+      ],
+      "protected_string_values": [
+        "return handle"
+      ],
+      "note": ""
+    },
+    {
+      "id": "ui_long_string",
+      "policy": "rename_safe",
+      "encoding": "utf-8",
+      "source": "local ui = [=[\n<Button|link=probe_close|text=--不可删除>\n]=]\nreturn ui",
+      "expected": "<Button|link=probe_close|text=--不可删除>\n",
+      "protected_globals": [],
+      "protected_fields": [],
+      "protected_string_values": [
+        "<Button|link=probe_close|text=--不可删除>\n"
+      ],
+      "note": ""
+    },
+    {
+      "id": "short_comment_and_literal",
+      "policy": "rename_safe",
+      "encoding": "utf-8",
+      "source": "local text = \"-- keep local end\" -- remove this comment\nlocal n = 3 -- remove another\nreturn text .. n",
+      "expected": "-- keep local end3",
+      "protected_globals": [],
+      "protected_fields": [],
+      "protected_string_values": [
+        "-- keep local end"
+      ],
+      "note": ""
+    },
+    {
+      "id": "long_comment_equals",
+      "policy": "rename_safe",
+      "encoding": "utf-8",
+      "source": "local x = 4\n--[==[\na \" -- [=[nested text]=]\n]==]\nreturn x + 1",
+      "expected": 5,
+      "protected_globals": [],
+      "protected_fields": [],
+      "protected_string_values": [],
+      "note": ""
+    },
+    {
+      "id": "comment_token_separator",
+      "policy": "rename_safe",
+      "encoding": "utf-8",
+      "source": "local a = true\nreturn a--[[delete but retain a separator]]and true",
+      "expected": true,
+      "protected_globals": [],
+      "protected_fields": [],
+      "protected_string_values": [],
+      "note": ""
+    },
+    {
+      "id": "generic_loop",
+      "policy": "rename_safe",
+      "encoding": "utf-8",
+      "source": "local sum = 0\nfor i, v in ipairs({2, 4, 6}) do sum = sum + i * v end\nreturn sum",
+      "expected": 28,
+      "protected_globals": [
+        "ipairs"
+      ],
+      "protected_fields": [],
+      "protected_string_values": [],
+      "note": ""
+    },
+    {
+      "id": "repeat_scope",
+      "policy": "rename_safe",
+      "encoding": "utf-8",
+      "source": "local total = 0\nrepeat\n    local n = 3\n    total = total + n\nuntil n == 3\nreturn total",
+      "expected": 3,
+      "protected_globals": [],
+      "protected_fields": [],
+      "protected_string_values": [],
+      "note": ""
+    },
+    {
+      "id": "nil_varargs",
+      "policy": "rename_safe",
+      "encoding": "utf-8",
+      "source": "local function f(...)\n    local a, b, c = ...\n    return select(\"#\", ...) .. \":\" .. tostring(b) .. \":\" .. c\nend\nreturn f(1, nil, 9)",
+      "expected": "3:nil:9",
+      "protected_globals": [
+        "select",
+        "tostring"
+      ],
+      "protected_fields": [],
+      "protected_string_values": [
+        "#",
+        ":"
+      ],
+      "note": ""
+    },
+    {
+      "id": "escaped_physical_newline",
+      "policy": "rename_safe",
+      "encoding": "utf-8",
+      "source": "local s = \"A\\\nB\"\nreturn s",
+      "expected": "A\nB",
+      "protected_globals": [],
+      "protected_fields": [],
+      "protected_string_values": [],
+      "note": ""
+    },
+    {
+      "id": "gbk_literals",
+      "policy": "rename_safe",
+      "encoding": "gbk",
+      "source": "local text = \"等级突破\"\nreturn text",
+      "expected": "等级突破",
+      "protected_globals": [],
+      "protected_fields": [],
+      "protected_string_values": [
+        "等级突破"
+      ],
+      "note": ""
+    },
+    {
+      "id": "sensitive_local_reflection",
+      "policy": "reject_or_preserve_affected_scope",
+      "encoding": "utf-8",
+      "source": "local secret = 7\nlocal found = false\nfor i = 1, 20 do\n    local name, value = debug.getlocal(1, i)\n    if name == \"secret\" then found = value; break end\nend\nreturn found",
+      "expected": 7,
+      "protected_globals": [
+        "debug"
+      ],
+      "protected_fields": [
+        "getlocal"
+      ],
+      "protected_string_values": [
+        "secret"
+      ],
+      "note": "Do not blindly rename observed locals; rejection must identify the file/scope. Baseline must return 7."
+    }
+  ]
+}
