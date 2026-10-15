@@ -170,6 +170,8 @@ class DataStore:
             safe_setup_template=str(data.get('safe_setup_template', '') or '').strip(),
             safe_setup_md5=str(data.get('safe_setup_md5', '') or '').strip(),
             safe_setup_import_time=str(data.get('safe_setup_import_time', '') or '').strip(),
+            client_import=str(data.get('client_import', '') or '').strip(),
+            client_export=str(data.get('client_export', '') or '').strip(),
         )
 
     def list_rules(self, group_name: str) -> List[str]:
@@ -257,4 +259,22 @@ class DataStore:
     def save_ui_config(self, config: Dict) -> None:
         with self.ui_config_path.open('w', encoding='utf-8') as f:
             json.dump(config, f, ensure_ascii=False, indent=2)
+
+    def remember_task_export(self, group_name, export_dir, export_kind, dual_mode, import_dir):
+        """Update the task's captured group, without consulting mutable UI state."""
+        group = self.load_group(group_name)
+        if group is None:
+            return None
+        if not group.import_dir and import_dir:
+            group.import_dir = import_dir
+        if dual_mode:
+            key = {'full': 'full_export_dir', 'hotfix': 'hotfix_export_dir'}.get(export_kind, 'export_dir')
+            setattr(group, key, export_dir)
+        else:
+            key = norm_rel(export_dir).lower()
+            group.export_presets = [export_dir] + [p for p in group.export_presets if norm_rel(p).lower() != key]
+            group.export_presets = group.export_presets[:MAX_EXPORT_PRESETS]
+            group.export_dir = export_dir
+        self.save_group(group)
+        return group
 

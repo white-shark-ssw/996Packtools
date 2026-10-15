@@ -1,4 +1,4 @@
-APP_TITLE = 'ws 996打包工具 By.白鲨 v0.114'
+APP_TITLE = 'ws 996打包工具 By.白鲨 v0.115'
 IMPORT_PLACEHOLDER = '请输入 MirServer 目录地址'
 MAX_EXPORT_PRESETS = 20
 SAFE_SETUP_FILENAME = '!Setup.txt'

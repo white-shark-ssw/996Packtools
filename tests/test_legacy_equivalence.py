@@ -14,7 +14,14 @@ def test_baseline_source_is_immutable():
     assert hashlib.sha256((ROOT / 'ws_pack_tool_v114.py').read_bytes()).hexdigest() == 'df2d282f0232b7e2ef53447fa6dfac057659d6ef5986ed420a4cd6c1e1a3fc32'
 
 
-def test_extraction_preserves_all_original_method_bodies():
+def test_original_bodies_except_explicit_upgrade_points():
+    # The mechanical-extraction commit verified EVERY method. The subsequent
+    # feature commit changes only these integration points; other bodies remain
+    # under the same structural comparison, including tree selection/interaction.
+    changed = {('DataStore', 'load_group'), ('HelpDialog', '_build_ui')} | {('App', name) for name in (
+        '__init__', '_save_ui_config', '_build_ui', '_clear_file_area', 'on_group_changed',
+        'save_group', 'new_group', 'delete_group', 'refresh_files', '_set_pack_busy',
+        '_show_pack_progress', '_close_pack_progress', '_start_pack_task', '_process_pack_queue', '_pack_worker')}
     original = ast.parse((ROOT / 'ws_pack_tool_v114.py').read_text('utf-8-sig'))
     copies = {}
     for path in (ROOT / 'wspack').glob('*.py'):
@@ -28,7 +35,8 @@ def test_extraction_preserves_all_original_method_bodies():
         if isinstance(node, ast.ClassDef):
             for method in node.body:
                 if isinstance(method, ast.FunctionDef):
-                    assert copies[node.name, method.name] == ast.dump(method, include_attributes=False), (node.name, method.name)
+                    if (node.name, method.name) not in changed:
+                        assert copies[node.name, method.name] == ast.dump(method, include_attributes=False), (node.name, method.name)
 
 
 @pytest.mark.parametrize('rel,is_dir', [
@@ -150,4 +158,5 @@ def test_old_group_data_roundtrip(tmp_path):
         group = obj.store.load_group('legacy')
         obj.store.save_group(group)
         values.append(json.loads(path.read_text('utf-8')))
-    assert values[0] == values[1]
+    assert values[0] == {key: value for key, value in values[1].items() if key not in ('client_import', 'client_export')}
+    assert values[1]['client_import'] == values[1]['client_export'] == ''

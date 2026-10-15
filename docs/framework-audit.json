@@ -1,0 +1,171 @@
+{
+  "repository": "white-shark-ssw/ws-FrameWork",
+  "commit": "9b199b237504e67f339d3a8c7bc480d33bdd306a",
+  "scope": {
+    "framework_ws_files": 27,
+    "other_key_files": 13
+  },
+  "files": [
+    {
+      "path": "source/MirServer/Mir200/Envir/ws/GameData.lua",
+      "sha": "c472084707066586265a26e6018bc2ee859b26e2"
+    },
+    {
+      "path": "source/MirServer/Mir200/Envir/ws/ServerToolsFun.lua",
+      "sha": "2fa150be7d4717b193195bedbb317e9e84aeb1e0"
+    },
+    {
+      "path": "source/MirServer/Mir200/Envir/ws/WsFunclib.lua",
+      "sha": "5d42738c52238890b12b20e3dd4b7d18130d453e"
+    },
+    {
+      "path": "source/MirServer/Mir200/Envir/ws/OnRegisterEvent.lua",
+      "sha": "b5527ee805d3ba1a6271c1176f689f348abf33d4"
+    },
+    {
+      "path": "source/MirServer/Mir200/Envir/ws/Trigger.lua",
+      "sha": "99bc370483dfcf9863911abc9ea1246a00ab9d6c"
+    },
+    {
+      "path": "source/MirServer/Mir200/Envir/ws/WsSystemLogic.lua",
+      "sha": "71e15888b0af600de2337c76e098092fa7ea83c8"
+    },
+    {
+      "path": "source/MirServer/Mir200/Envir/ws/init.lua",
+      "sha": "6423d5f18ac91b7a3b6c57f1b4d856515aef807e"
+    },
+    {
+      "path": "source/MirServer/Mir200/Envir/ws/console.lua",
+      "sha": "1fb6c0f1ad0b64a5132a7012b4d74e00156e6bef"
+    },
+    {
+      "path": "source/MirServer/Mir200/Envir/Market_Def/QFunction-0.lua",
+      "sha": "b8e44e6f0d5c6c732d7da477973c3bfd515e95a8"
+    },
+    {
+      "path": "source/MirServer/Mir200/Envir/Market_Def/system/load.lua",
+      "sha": "600574ff95112d59cf947487f283f1a824b6158e"
+    },
+    {
+      "path": "source/MirServer/Mir200/Envir/Market_Def/system/战斗模型.lua",
+      "sha": "e2f51d0a08f8ec34b1b26a9a20449882eec4647d"
+    },
+    {
+      "path": "source/MirServer/Mir200/Envir/Market_Def/system/派发配置构建.lua",
+      "sha": "1bcebdbeb77e0ce50b0d4f1febd4b81465b8c67d"
+    },
+    {
+      "path": "source/MirServer/Mir200/Envir/Market_Def/form/示例1渠道2.lua",
+      "sha": "18d5a9b8dc08b8ffb9c69386aa458740e990f905"
+    },
+    {
+      "path": "source/MirServer/Mir200/Envir/Market_Def/form/等级突破.lua",
+      "sha": "ef4939d3994d6ae656290514f1cd87056738768e"
+    },
+    {
+      "path": "source/MirServer/Mir200/Envir/Market_Def/直播间/直播间QFunction.lua",
+      "sha": "9f119da40edcd2b3dec5d4a7d58c5f16183e741e"
+    },
+    {
+      "path": "source/Client/GUILayout/GUIUtil.lua",
+      "sha": "7a953f8f5fe93db61d1a86abec38ce060c5700b8"
+    },
+    {
+      "path": "source/Client/GUILayout/ws/init.lua",
+      "sha": "e0bc7f0ffcd9a7c83a3e137e1994c2951534e4b5"
+    },
+    {
+      "path": "source/Client/GUILayout/ws/GameData.lua",
+      "sha": "7e7eba645f49a1359da2012f152cb929b5098e6a"
+    },
+    {
+      "path": "source/Client/GUILayout/ws/ClientToolsFun.lua",
+      "sha": "a609e23f363fec8869cd2e0ebd72bd9cb88d6e6b"
+    },
+    {
+      "path": "source/Client/GUILayout/ws/wsfunlib.lua",
+      "sha": "fe46b55fb123fe2a2d314d96fca2c98e52eeea31"
+    },
+    {
+      "path": "source/Client/GUILayout/ws/UIFramework.lua",
+      "sha": "3e195ba1b78fd0bc713ec8b259f6bb271fb676f0"
+    },
+    {
+      "path": "source/Client/GUILayout/ws/UIAsyncRender.lua",
+      "sha": "78a393d4f67a69c395da11a50554ae5fedc31390"
+    },
+    {
+      "path": "source/Client/GUILayout/ws/UIShader.lua",
+      "sha": "dc37ab51603a5956436b0a0c67db4b72e298166f"
+    },
+    {
+      "path": "source/Client/GUILayout/ws/UIShaderConfig.lua",
+      "sha": "6d4bcf14ccd2725b90c9885d024a37fd0681f73b"
+    },
+    {
+      "path": "source/Client/GUILayout/ws/UITabView.lua",
+      "sha": "50f930826baf347e982d0b05165e8cddbb4de796"
+    },
+    {
+      "path": "source/Client/GUILayout/ws/SuperView.lua",
+      "sha": "8875a964b09ea63d5972dff2d36885ebae1dec85"
+    },
+    {
+      "path": "source/Client/GUILayout/ws/console.lua",
+      "sha": "0ee82255ae37c72a3bcbb9fe727b1ffbd9766c5e"
+    },
+    {
+      "path": "source/Client/GUILayout/system/GameBase.lua",
+      "sha": "b634dfd2b21eff1e2ec2a0f92f83848e7da2c8c4"
+    },
+    {
+      "path": "source/Client/GUILayout/system/game_model.lua",
+      "sha": "22ceacb3abf61a3f22590de5cf130211a5b35f0e"
+    },
+    {
+      "path": "source/Client/GUILayout/form/dengjitupo.lua",
+      "sha": "c1510ea54f04a54ae608c8f9ebd48b0849e0ce78"
+    },
+    {
+      "path": "source/Client/GUILayout/form/guanzhi.lua",
+      "sha": "1b44c6bf3f3cb52f1e7170335a104d7bab47c00a"
+    },
+    {
+      "path": "source/Client/GUILayout/ws/DrawEffect.lua",
+      "sha": "6165ce0a1da8ddc17463f20abbc2fd3b652fdb5a"
+    },
+    {
+      "path": "source/Client/GUILayout/ws/RechargePanel.lua",
+      "sha": "3f8223b60aa0557b88041962766a2156477f8291"
+    },
+    {
+      "path": "source/Client/GUILayout/ws/UIGradient.lua",
+      "sha": "ee0403a16e0b18d3c6416ee7cbbb217f7ac67c6d"
+    },
+    {
+      "path": "source/Client/GUILayout/ws/effect/ContinuousElectricChain.lua",
+      "sha": "778dae60148c13825f6eebcfa87c69a93b434b86"
+    },
+    {
+      "path": "source/Client/GUILayout/ws/effect/GroupCutLightning.lua",
+      "sha": "dafdab927c356f7619d1b0ff9cce7dd8b37287e2"
+    },
+    {
+      "path": "source/MirServer/Mir200/Envir/ws/UserConfig.lua",
+      "sha": "68f420a6874ae269b84b54634f33475961b4f30c"
+    },
+    {
+      "path": "source/MirServer/Mir200/Envir/ws/loadingEnd.lua",
+      "sha": "77178602dbf7fde578ba053695fe6c0b0bc2bf4d"
+    },
+    {
+      "path": "source/MirServer/Mir200/Envir/ws/模版文件.lua",
+      "sha": "14e9c3e65392767c399e496dd02466a5ceb46777"
+    },
+    {
+      "path": "source/MirServer/Mir200/Envir/Market_Def/system/战斗配置.lua",
+      "sha": "a58eddb95140e2c4892d60efe38b541f26aac97d"
+    }
+  ],
+  "purpose": "Read-only audit provenance, not a rename allowlist or build input."
+}

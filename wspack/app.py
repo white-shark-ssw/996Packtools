@@ -24,13 +24,15 @@ from .dialogs import *
 from .scanner import FileScanner
 from .collector import FileCollector
 from .archive import ZipBuilder
+from .client import ClientActions
+from .task_ui import TaskActions
 
-class App(FileScanner, FileCollector, ZipBuilder):
+class App(FileScanner, FileCollector, ZipBuilder, ClientActions, TaskActions):
     def __init__(self, root: tk.Tk):
         self.root = root
         self.root.title(APP_TITLE)
-        self.root.geometry('1220x820')
-        self.root.minsize(1080, 720)
+        self.root.geometry('1220x850')
+        self.root.minsize(1080, 750)
 
         self.store = DataStore(config_base_dir())
 
@@ -41,10 +43,14 @@ class App(FileScanner, FileCollector, ZipBuilder):
         self.export_dir_var = tk.StringVar()
         self.full_export_dir_var = tk.StringVar()
         self.hotfix_export_dir_var = tk.StringVar()
+        self.client_import_var = tk.StringVar()
+        self.client_export_var = tk.StringVar()
         self.show_filtered_only = tk.BooleanVar(value=True)
         self.show_hidden_items = tk.BooleanVar(value=False)
 
         self.ui_config = self.store.load_ui_config()
+        self.encrypt_enabled = tk.BooleanVar(value=bool(self.ui_config.get('encrypt_enabled', False)))
+        self.obfuscate_enabled = tk.BooleanVar(value=bool(self.ui_config.get('obfuscate_enabled', False)))
         self.anchor_bar_enabled = tk.BooleanVar(value=bool(self.ui_config.get('anchor_bar_enabled', True)))
         self.anchor_overlay_hover = False
         self.anchor_overlay_weak_style = {
@@ -113,6 +119,7 @@ class App(FileScanner, FileCollector, ZipBuilder):
 
         self._build_ui()
         self._load_groups()
+        self.root.protocol('WM_DELETE_WINDOW', self._on_close)
         if not self.anchor_bar_enabled.get():
             self._hide_frozen_anchor()
         self.root.after(120, self._process_scan_queue)
@@ -137,6 +144,8 @@ class App(FileScanner, FileCollector, ZipBuilder):
         self.ui_config['open_export_dir_after_pack'] = bool(self.open_export_dir_after_pack.get())
         self.ui_config['dual_export_dir_mode'] = bool(self.dual_export_dir_mode.get())
         self.ui_config['rename_export_zip'] = bool(self.rename_export_zip.get())
+        self.ui_config['encrypt_enabled'] = bool(self.encrypt_enabled.get())
+        self.ui_config['obfuscate_enabled'] = bool(self.obfuscate_enabled.get())
         current_group = self.current_group_name.get().strip()
         if current_group:
             self.ui_config['current_group_name'] = current_group
@@ -541,6 +550,8 @@ class App(FileScanner, FileCollector, ZipBuilder):
         self.export_row.pack(fill='x', pady=2)
         self._rebuild_export_dir_row()
 
+        self._build_client_row(top)
+
         row3 = ttk.Frame(top)
         row3.pack(fill='x', pady=2)
         ttk.Label(row3, text='母包:').pack(side='left')
@@ -593,6 +604,18 @@ class App(FileScanner, FileCollector, ZipBuilder):
         ttk.Checkbutton(file_ops, text='打包前预览', variable=self.preview_before_pack, command=self.on_preview_before_pack_toggle).pack(side='left', padx=(18, 0))
         ttk.Checkbutton(file_ops, text='规则勾选映射', variable=self.rule_mapping_enabled, command=self.on_rule_mapping_toggle).pack(side='left', padx=(24, 0))
         ttk.Checkbutton(file_ops, text='打包完成后打开导出目录', variable=self.open_export_dir_after_pack, command=self.on_open_export_dir_toggle).pack(side='left', padx=(18, 0))
+        # tk.Checkbutton retains explicit label colors under Windows vista themes.
+        common_bg = ttk.Style(self.root).lookup('TFrame', 'background') or self.root.cget('background')
+        self.encrypt_checkbox = tk.Checkbutton(file_ops, text='开启加密', variable=self.encrypt_enabled,
+                                              command=self.on_protection_toggle, foreground='#c43b35',
+                                              activeforeground='#c43b35', background=common_bg, activebackground=common_bg)
+        self.encrypt_checkbox.pack(side='left', padx=(14, 0))
+        self.obfuscate_checkbox = tk.Checkbutton(file_ops, text='开启混淆', variable=self.obfuscate_enabled,
+                                                command=self.on_protection_toggle, foreground='#7c3aed',
+                                                activeforeground='#7c3aed', background=common_bg, activebackground=common_bg)
+        self.obfuscate_checkbox.pack(side='left', padx=(6, 0))
+        WidgetTooltip(self.encrypt_checkbox, '服务端与客户端共用：只保护本次Lua，删除业务注释并保留行号')
+        WidgetTooltip(self.obfuscate_checkbox, '服务端与客户端共用：删除业务注释，仅混淆局部名称，保留字段、字符串和行号')
 
         tree_wrap = ttk.Frame(file_frame)
         tree_wrap.pack(fill='both', expand=True, padx=8, pady=4)
@@ -715,6 +738,10 @@ class App(FileScanner, FileCollector, ZipBuilder):
         self.on_group_changed()
 
     def _clear_file_area(self):
+        # Ignore a previous group's background scan after changing/new/deleting groups.
+        self.scan_generation += 1
+        if self.scanning:
+            self._set_busy(False)
         self.tree.delete(*self.tree.get_children())
         self.scan_entries = {}
         self.tree_meta = {}
@@ -946,6 +973,8 @@ class App(FileScanner, FileCollector, ZipBuilder):
         group = self.store.load_group(name)
         if not group:
             return
+        self.client_import_var.set(getattr(group, 'client_import', ''))
+        self.client_export_var.set(getattr(group, 'client_export', ''))
         self.import_dir_var.set(group.import_dir)
         self._refresh_export_preset_combo(group)
         self._refresh_safe_setup_status(group)
@@ -1260,6 +1289,8 @@ class App(FileScanner, FileCollector, ZipBuilder):
             safe_setup_template=getattr(existing, 'safe_setup_template', '') or '',
             safe_setup_md5=getattr(existing, 'safe_setup_md5', '') or '',
             safe_setup_import_time=getattr(existing, 'safe_setup_import_time', '') or '',
+            client_import=self.client_import_var.get().strip(),
+            client_export=self.client_export_var.get().strip(),
         )
         self.store.save_group(group)
         self._refresh_export_preset_combo(group, keep_current=group.export_dir)
@@ -1291,6 +1322,8 @@ class App(FileScanner, FileCollector, ZipBuilder):
         self.export_dir_var.set('')
         self.full_export_dir_var.set('')
         self.hotfix_export_dir_var.set('')
+        self.client_import_var.set('')
+        self.client_export_var.set('')
         self._refresh_export_preset_combo(PackGroup(name=name), keep_current='')
         self.current_export_preset_name.set('预设▼')
         self.rule_combo['values'] = []
@@ -1348,6 +1381,8 @@ class App(FileScanner, FileCollector, ZipBuilder):
             self.export_dir_var.set('')
             self.full_export_dir_var.set('')
             self.hotfix_export_dir_var.set('')
+            self.client_import_var.set('')
+            self.client_export_var.set('')
             self.rule_combo['values'] = []
             self.current_rule_name.set('')
             self._refresh_safe_setup_status(None)
@@ -1561,6 +1596,8 @@ class App(FileScanner, FileCollector, ZipBuilder):
             self.root.after(120, self._process_scan_queue)
 
     def refresh_files(self):
+        if self.packing:
+            return
         group_name = self.current_group_name.get().strip()
         if not group_name:
             messagebox.showwarning('提示', '请先新建或选择一个打包组')
@@ -2355,14 +2392,35 @@ class App(FileScanner, FileCollector, ZipBuilder):
 
     def _set_pack_busy(self, busy: bool):
         self.packing = busy
-        state = 'disabled' if busy else 'normal'
-        for btn_name in ('btn_pack_rule', 'btn_pack_checked', 'btn_refresh', 'btn_set_baseline', 'btn_pack_full'):
-            btn = getattr(self, btn_name, None)
-            if btn is not None:
+        if busy:
+            self._task_control_states = []
+
+            def disable(parent):
+                for widget in parent.winfo_children():
+                    if isinstance(widget, tk.Toplevel):
+                        continue
+                    try:
+                        state = str(widget.cget('state'))
+                        widget.configure(state='disabled')
+                        self._task_control_states.append((widget, state))
+                    except tk.TclError:
+                        pass
+                    disable(widget)
+
+            disable(self.root)
+        else:
+            for widget, state in getattr(self, '_task_control_states', []):
                 try:
-                    btn.configure(state=state)
-                except Exception:
+                    widget.configure(state=state)
+                except tk.TclError:
                     pass
+            self._task_control_states = []
+
+    def _on_close(self):
+        if self.packing:
+            messagebox.showwarning('任务进行中', '请先取消当前任务，等待暂存清理或输出回滚完成后再关闭工具。')
+            return
+        self.root.destroy()
 
     def _show_pack_progress(self, title: str, total_steps: int):
         self._close_pack_progress()
@@ -2370,7 +2428,7 @@ class App(FileScanner, FileCollector, ZipBuilder):
         dlg.title(title)
         dlg.transient(self.root)
         dlg.resizable(False, False)
-        dlg.protocol('WM_DELETE_WINDOW', lambda: None)
+        dlg.protocol('WM_DELETE_WINDOW', self.cancel_current_task)
 
         body = ttk.Frame(dlg, padding=12)
         body.pack(fill='both', expand=True)
@@ -2379,6 +2437,7 @@ class App(FileScanner, FileCollector, ZipBuilder):
         self.pack_status_label.pack(anchor='w', pady=(8, 6))
         self.pack_progress = ttk.Progressbar(body, mode='determinate', length=360, maximum=max(1, total_steps))
         self.pack_progress.pack(fill='x')
+        ttk.Button(body, text='取消任务', command=self.cancel_current_task).pack(anchor='e', pady=(8, 0))
 
         dlg.update_idletasks()
         try:
@@ -2389,10 +2448,12 @@ class App(FileScanner, FileCollector, ZipBuilder):
             pass
 
         self.pack_dialog = dlg
+        dlg.grab_set()
 
     def _close_pack_progress(self):
         try:
             if self.pack_dialog is not None and self.pack_dialog.winfo_exists():
+                self.pack_dialog.grab_release()
                 self.pack_dialog.destroy()
         except Exception:
             pass
@@ -2416,21 +2477,29 @@ class App(FileScanner, FileCollector, ZipBuilder):
             return
 
         import_root_name = self._get_output_root_name(prefix)
+        options = self._protection_options()
+        files = [dict(meta) for meta in files]
         self.pack_context = {
+            'kind': 'server',
             'group_name': self.current_group_name.get().strip(),
             'files': files,
             'update_baseline': update_baseline,
             'export_dir': export_dir,
             'export_kind': export_kind,
+            'options': options,
+            'open_after': bool(self.open_export_dir_after_pack.get()),
+            'dual_mode': bool(self.dual_export_dir_mode.get()),
+            'import_dir': self.import_dir_var.get().strip(),
         }
+        self._task_cancel = threading.Event()
         total_steps = max(1, len(files) * 2 + 4)
         self._set_pack_busy(True)
         self._show_pack_progress('正在打包', total_steps)
-        self.log(f'开始后台打包，共 {len(files)} 个项目')
+        self.log(f'开始后台打包，共 {len(files)} 个项目；加密={options.encrypt}，混淆={options.obfuscate}')
 
         t = threading.Thread(
             target=self._pack_worker,
-            args=(export_dir, import_root_name, files),
+            args=(export_dir, import_root_name, files, options, self._task_cancel),
             daemon=True
         )
         t.start()
@@ -2447,26 +2516,16 @@ class App(FileScanner, FileCollector, ZipBuilder):
                     if self.pack_status_label is not None:
                         self.pack_status_label.configure(text=message)
                 elif kind == 'done':
-                    _, zip_path = item
-                    self._set_pack_busy(False)
-                    self._close_pack_progress()
-                    if self.pack_context:
-                        self._remember_export_dir(self.pack_context.get('export_dir', ''), self.pack_context.get('export_kind', 'single'))
-                    if self.pack_context and self.pack_context.get('update_baseline'):
-                        self._update_baseline_for_files(self.pack_context['group_name'], self.pack_context['files'])
-                        self.log('已根据勾选打包结果更新基线')
-                    zip_size = Path(zip_path).stat().st_size if Path(zip_path).exists() else 0
-                    self.log(f'压缩包生成成功：{Path(zip_path).name}（{zip_size / 1024:.1f} KB）')
-                    messagebox.showinfo('完成', f'压缩包生成成功：\n{zip_path}')
-                    if self.pack_context and self.open_export_dir_after_pack.get():
-                        self._open_directory(self.pack_context.get('export_dir', ''))
-                    self.pack_context = None
+                    self._finish_task(item[2])
                 elif kind == 'error':
                     _, err = item
                     self._set_pack_busy(False)
                     self._close_pack_progress()
-                    self.log(f'打包失败：{err}')
-                    messagebox.showerror('错误', f'打包失败：{err}')
+                    self.log(f'任务未完成：{err}')
+                    if getattr(self, '_task_cancel', None) is not None and self._task_cancel.is_set():
+                        messagebox.showinfo('已取消', str(err))
+                    else:
+                        messagebox.showerror('错误', f'任务失败：{err}')
                     self.pack_context = None
         except queue.Empty:
             pass

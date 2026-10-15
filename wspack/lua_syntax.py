@@ -412,6 +412,19 @@ def check_reflection(parsed):
     """
     tokens = parsed.tokens
     forbidden = {'getlocal', 'setlocal', 'getupvalue', 'setupvalue', 'upvalueid', 'upvaluejoin'}
+    # Also reject simple constant-concatenation spellings of reflective keys;
+    # an opaque alias is not made safe merely by splitting its string literal.
+    for index, token in enumerate(tokens[:-1]):
+        if token.kind == 'string' and token.text[:1] in ('"', "'") and '\\' not in token.text:
+            value, cursor = token.text[1:-1], index + 1
+            while cursor + 1 < len(tokens) and tokens[cursor].text == '..' and tokens[cursor + 1].kind == 'string':
+                literal = tokens[cursor + 1].text
+                if literal[:1] not in ('"', "'") or '\\' in literal:
+                    break
+                value += literal[1:-1]
+                cursor += 2
+            if value == 'debug' or value in forbidden:
+                raise LuaSyntaxError(f'line {token.line}: dynamic reflection key is unsupported')
     for index, token in enumerate(tokens[:-1]):
         if token.kind == 'name' and token.text in forbidden:
             raise LuaSyntaxError(f'line {token.line}: name-sensitive reflection {token.text} is unsupported')
@@ -433,7 +446,7 @@ def transform(source, strip_comments, obfuscate):
     if obfuscate:
         check_reflection(parsed)
         reserved = {token.text for token in parsed.tokens if token.kind == 'name'} | KEYWORDS
-        prefix = '_w' + secrets.token_hex(3) + '_'
+        prefix = '_' + secrets.token_hex(1)
         for binding in parsed.bindings:
             # Lua 5.1 compatibility vararg 'arg' and implicit self stay untouched.
             if binding.implicit or binding.name == 'arg':

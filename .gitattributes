@@ -1,0 +1,9 @@
+*.py text eol=lf
+*.md text eol=lf
+*.json text eol=lf
+# Preserve the immutable baseline and byte-sensitive GBK/CRLF fixtures.
+ws_pack_tool_v114.py -text
+*.lua -text
+*.bat -text
+*.png binary
+*.ico binary

@@ -1,0 +1,153 @@
+{
+  "environment": "Linux container, Python 3.12, Lupa 2.8; not the 996 engine",
+  "loader_scope": "decrypt + compile only; business initialization skipped; 3 samples, median",
+  "loader": [
+    {
+      "file": "等级突破服务端",
+      "source_bytes": 10133,
+      "processed_bytes": 9634,
+      "release_bytes": 31841,
+      "build_ms": 59.228,
+      "loader": [
+        {
+          "backend": "lua51",
+          "median_ms": 58.465,
+          "samples_ms": [
+            57.552,
+            58.465,
+            68.303
+          ]
+        },
+        {
+          "backend": "luajit21",
+          "median_ms": 3.772,
+          "samples_ms": [
+            3.937,
+            3.699,
+            3.772
+          ]
+        }
+      ]
+    },
+    {
+      "file": "等级突破客户端",
+      "source_bytes": 4082,
+      "processed_bytes": 3821,
+      "release_bytes": 20094,
+      "build_ms": 27.135,
+      "loader": [
+        {
+          "backend": "lua51",
+          "median_ms": 24.628,
+          "samples_ms": [
+            31.112,
+            24.628,
+            22.932
+          ]
+        },
+        {
+          "backend": "luajit21",
+          "median_ms": 2.029,
+          "samples_ms": [
+            2.029,
+            2.094,
+            1.943
+          ]
+        }
+      ]
+    },
+    {
+      "file": "SuperView固定快照",
+      "source_bytes": 167690,
+      "processed_bytes": 137657,
+      "release_bytes": 290555,
+      "build_ms": 914.788,
+      "loader": [
+        {
+          "backend": "lua51",
+          "median_ms": 815.282,
+          "samples_ms": [
+            839.023,
+            815.282,
+            812.993
+          ]
+        },
+        {
+          "backend": "luajit21",
+          "median_ms": 40.879,
+          "samples_ms": [
+            42.098,
+            40.879,
+            39.703
+          ]
+        }
+      ]
+    }
+  ],
+  "ordinary_calls": [
+    {
+      "backend": "lua51",
+      "encrypt": false,
+      "obfuscate": false,
+      "iterations": 200000,
+      "median_ms": 6.096,
+      "extra_decryptions_during_calls": 0
+    },
+    {
+      "backend": "lua51",
+      "encrypt": true,
+      "obfuscate": false,
+      "iterations": 200000,
+      "median_ms": 6.413,
+      "extra_decryptions_during_calls": 0
+    },
+    {
+      "backend": "lua51",
+      "encrypt": false,
+      "obfuscate": true,
+      "iterations": 200000,
+      "median_ms": 6.523,
+      "extra_decryptions_during_calls": 0
+    },
+    {
+      "backend": "lua51",
+      "encrypt": true,
+      "obfuscate": true,
+      "iterations": 200000,
+      "median_ms": 6.296,
+      "extra_decryptions_during_calls": 0
+    },
+    {
+      "backend": "luajit21",
+      "encrypt": false,
+      "obfuscate": false,
+      "iterations": 200000,
+      "median_ms": 0.171,
+      "extra_decryptions_during_calls": 0
+    },
+    {
+      "backend": "luajit21",
+      "encrypt": true,
+      "obfuscate": false,
+      "iterations": 200000,
+      "median_ms": 0.171,
+      "extra_decryptions_during_calls": 0
+    },
+    {
+      "backend": "luajit21",
+      "encrypt": false,
+      "obfuscate": true,
+      "iterations": 200000,
+      "median_ms": 0.171,
+      "extra_decryptions_during_calls": 0
+    },
+    {
+      "backend": "luajit21",
+      "encrypt": true,
+      "obfuscate": true,
+      "iterations": 200000,
+      "median_ms": 0.171,
+      "extra_decryptions_during_calls": 0
+    }
+  ]
+}

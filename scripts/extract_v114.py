@@ -7,6 +7,8 @@ import ast
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+if (ROOT / 'wspack/app.py').exists():
+    raise SystemExit('This one-time extraction must not overwrite the maintained package. Use a fresh baseline checkout.')
 SOURCE = (ROOT / 'ws_pack_tool_v114.py').read_text(encoding='utf-8-sig')
 LINES = SOURCE.splitlines(keepends=True)
 TREE = ast.parse(SOURCE)

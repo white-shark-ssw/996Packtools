@@ -26,6 +26,8 @@ class PackGroup:
     safe_setup_template: str = ''
     safe_setup_md5: str = ''
     safe_setup_import_time: str = ''
+    client_import: str = ''
+    client_export: str = ''
 
 
 @dataclass

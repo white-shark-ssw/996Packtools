@@ -1,6 +1,6 @@
-"""Portable source-encryption reference for the existing Python packaging project.
+"""ChaCha20 and standalone loader builder adapted from the tested handoff.
 
-Not the completed packaging-tool feature. Does not strip comments or obfuscate.
+Comment stripping/obfuscation are owned by processor.py, not these primitives.
 The generated Lua includes its key; Adler-32 is only a corruption check.
 """
 import argparse
@@ -62,14 +62,14 @@ def lua_bytes(data):
     return '"' + ''.join('\\%03d' % byte for byte in data) + '"'
 
 def make_wrapper(source, fallback, key, nonce):
-    """Reference loader only: no comment stripping, obfuscation or bytecode."""
+    """Build a source loader; caller-owned transformations happen separately."""
     crypto = CRYPTO_PATH.read_text("ascii")
     ciphertext = chacha20(source, key, nonce)
     if chacha20(ciphertext, key, nonce) != source:
         raise ValueError("Encryption roundtrip verification failed")
     header = '''-- WS-LUA-PROTECTED source-chacha20-v1. Requires Lua 5.1 or LuaJIT.
 -- Decryption happens once per script load. The key is bundled in this file.
--- This test raises copying effort; it does not keep code secret from the host.
+-- This layer raises copying effort; it does not keep code secret from the host.
 local __env = getfenv(1)
 local __source_name = FALLBACK
 if debug and type(debug.getinfo) == "function" then

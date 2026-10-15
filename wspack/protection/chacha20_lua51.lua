@@ -1,9 +1,9 @@
--- Self-contained ChaCha20 module for this compatibility test; Lua 5.1.
+-- Self-contained ChaCha20 module adapted for the Lua 5.1 source loader.
 -- Based on BernhardZat/pure-lua-5.1-crypto, MIT, copyright 2022-2026 BernhardZat.
 -- Upstream revision: 62d20e1fc5126ecd0dbb9a805e3ae8057ba8c025
 -- ChaCha20 modules and misc helpers are bundled; bit helpers are replaced
 -- by the minimal arithmetic-only operations below. No C module is required.
--- No payload authentication, loader obfuscation or production hardening is included.
+-- This module supplies decryption; it does not authenticate the payload.
 --[[
 MIT License
 
@@ -41,17 +41,40 @@ factories["util.bitops.bitops"] = function()
 -- Minimal unsigned operations needed by the bundled ChaCha20 implementation.
 local floor = math.floor
 local MOD = 4294967296
+-- Reuse an engine-provided bit library when available; never require a DLL.
+-- The arithmetic fallback remains available in a plain Lua 5.1 environment.
+local native = bit or bit32
+if type(native) ~= "table" then native = nil end
+local native_xor = native and native.bxor
+local native_rot = native and (native.rol or native.lrotate)
+local fast = type(native_xor) == "function" and type(native_rot) == "function"
+local nibble_xor = {}
+if not fast then
+    for a = 0, 15 do
+        local row = {}
+        nibble_xor[a] = row
+        for b = 0, 15 do
+            local x, y, result, place = a, b, 0, 1
+            for _ = 1, 4 do
+                if x % 2 ~= y % 2 then result = result + place end
+                x, y, place = floor(x / 2), floor(y / 2), place * 2
+            end
+            row[b] = result
+        end
+    end
+end
 local function u32_xor(a, b)
+    if fast then return native_xor(a, b) % MOD end
     a, b = a % MOD, b % MOD
     local result, place = 0, 1
-    for _ = 1, 32 do
-        local x, y = a % 2, b % 2
-        if x ~= y then result = result + place end
-        a, b, place = floor(a / 2), floor(b / 2), place * 2
+    for _ = 1, 8 do
+        result = result + nibble_xor[a % 16][b % 16] * place
+        a, b, place = floor(a / 16), floor(b / 16), place * 16
     end
     return result
 end
 local function u32_lrot(a, n)
+    if fast then return native_rot(a, n) % MOD end
     n = n % 32
     return (a % 2 ^ (32 - n)) * 2 ^ n + floor(a / 2 ^ (32 - n))
 end

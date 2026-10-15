@@ -95,9 +95,27 @@ def test_comments_and_literal_spans():
 def test_reflection_aliases_fail_explicitly():
     for source in ['local d=debug;return d.getlocal(1,1)',
                    'local f=debug.getupvalue;return f(print,1)',
-                   'local t=debug["get".."local"];return t(1,1)']:
+                   'local t=debug["get".."local"];return t(1,1)',
+                   'local d=_G["de".."bug"];return d["get".."local"](1,1)']:
         with pytest.raises(ProtectionError, match='debug|reflection'):
             protect(source.encode(), ProtectionOptions(False, True), 'utf-8', '@reflection.lua')
+
+
+@pytest.mark.parametrize('fallback', [False, True])
+def test_lua_crypto_vector_native_and_fallback(runtime, fallback):
+    from wspack.protection.crypto import CRYPTO_PATH, chacha20
+    lua, load = runtime
+    fn, environment, _ = load(CRYPTO_PATH.read_bytes(), b'@crypto.lua')
+    if fallback:
+        environment[b'bit'] = False
+        environment[b'bit32'] = False
+    crypto = fn()
+    key = bytes(range(32))
+    nonce = bytes.fromhex('000000090000004a00000000')
+    expected = bytes.fromhex('10f1e7e4d13b5915500fdd1fa32071c4c7d1f4c733c068030422aa9ac3d46c4e'
+                             'd2826446079faa0914c2d705d98b02a2b5129cd1de164eb9cbd083e8a2503c4e')
+    apply = lua.eval(b'function(C,k,n,s) return C.new(k,n,1):apply_keystream(s) end')
+    assert chacha20(bytes(64), key, nonce) == apply(crypto, key, nonce, bytes(64)) == expected
 
 
 @pytest.mark.parametrize('raw', [b'\xef\xbb\xbfreturn 1', b'#!lua\nreturn 1', b'\x1bLua', b'\x1bLJ',
@@ -133,3 +151,27 @@ def test_loader_lines_environment_returns_and_randomization(runtime):
     fn, _, _ = load(error_result.output, b'@error.lua')
     with pytest.raises(Exception, match='error.lua:2: EXPECTED'):
         fn()
+
+
+@pytest.mark.parametrize('obfuscate', [False, True])
+def test_new_loader_rejects_corrupted_payload_before_business(runtime, obfuscate):
+    result = protect(b'published=true;return 7', ProtectionOptions(True, obfuscate), 'utf-8', '@corrupt.lua')
+    text = result.output.decode('ascii')
+    match = re.search(r'\[=\[\n([0-9a-f])', text)
+    assert match
+    position = match.start(1)
+    corrupt = text[:position] + ('0' if text[position] != '0' else '1') + text[position + 1:]
+    _, load = runtime
+    fn, environment, capture = load(corrupt.encode(), b'@corrupt.lua')
+    with pytest.raises(Exception, match='payload checksum mismatch'):
+        fn()
+    assert capture[b'count'] is None and environment[b'published'] is None
+
+
+def test_new_loader_source_fallback_without_debug(runtime):
+    result = protect(b'local x=7;return x', ProtectionOptions(True, True), 'utf-8', '@form/fallback.lua')
+    _, load = runtime
+    fn, environment, capture = load(result.output, b'=(no file source)')
+    environment[b'debug'] = False
+    assert fn() == 7
+    assert capture[b'name'] == b'@form/fallback.lua'
