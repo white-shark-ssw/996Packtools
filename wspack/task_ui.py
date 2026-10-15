@@ -79,4 +79,3 @@ class TaskActions:
             messagebox.showinfo('完成', '输出生成成功：\n' + result.output)
         if context.get('open_after'):
             self._open_directory(context.get('export_dir', ''))
-

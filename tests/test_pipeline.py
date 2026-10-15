@@ -43,6 +43,9 @@ def test_archive_all_modes_preserve_source_and_structure(tmp_path, options, kind
                 if isinstance(expected, str):
                     expected = expected.encode()
                 actual = archive.read('MirServer/' + rel)
+                report = next((r for r in result.reports if r['path'] == rel), None)
+                if report and report.get('status') == 'protected':
+                    assert report['output_sha256'] == hashlib.sha256(actual).hexdigest()
                 if Path(rel).suffix.lower() != '.lua' or not options.enabled:
                     assert actual == expected
                 elif options.encrypt:

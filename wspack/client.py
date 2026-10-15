@@ -51,6 +51,3 @@ class ClientActions:
             self.pack_queue.put(('done', result.output, result))
         except Exception as error:
             self.pack_queue.put(('error', str(error)))
-
-
-
